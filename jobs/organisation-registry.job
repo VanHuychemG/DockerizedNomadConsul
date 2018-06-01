@@ -52,6 +52,7 @@ job "organisation-registry" {
         Configuration__ConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;User ID=sa;Password=Password123!;"
         SqlServer__ConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;User ID=sa;Password=Password123!;"
         SqlServer__MigrationsConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;User ID=sa;Password=Password123!;"
+        Auth__JwtSharedSigningKey = "mysupersecret_secretkey!123"
       }
 
       service {
