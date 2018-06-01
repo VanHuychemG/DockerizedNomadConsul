@@ -1,0 +1,15 @@
+{
+  "server": {
+    "enabled": true,
+    "bootstrap_expect": 3
+  },
+  "client": {
+    "enabled": true
+  },
+  "datacenter": "dc1",
+  "data_dir": "/nomad/data/",
+  "bind_addr": "0.0.0.0",
+  "consul": {
+    "address": "0.0.0.0:8500"
+  }
+}

@@ -1,0 +1,92 @@
+job "organisation-registry" {
+  // region      = "eu-west-1"
+  // datacenters = ["aws-eu-west-1"]
+  datacenters = ["dc1"]
+
+  priority = 70
+
+  constraint {
+    attribute = "${attr.kernel.name}"
+    value     = "linux"
+  }
+
+  meta {
+    registry = "organisation"
+  }
+
+  group "organisation-registry-api" {
+    count = 1
+
+  //  constraint {
+  //    operator = "distinct_property"
+  //    attribute = "${attr.platform.aws.placement.availability-zone}"
+  //    value = "1"
+  //  }
+
+    meta {
+      registry-component = "api"
+    }
+
+    update {
+      max_parallel = 1
+      min_healthy_time = "30s"
+    }
+
+    task "organisation-registry-api" {
+      driver = "docker"
+
+      config {
+        image = "921707234258.dkr.ecr.eu-west-1.amazonaws.com/organisationregistry/api-wegwijs:0"
+
+        hostname           = "organisation-registry-api"
+        dns_servers        = ["172.21.0.2"]
+        port_map {
+          http  = 5000
+        }
+      }
+
+      env {
+        ASPNETCORE_ENVIRONMENT = "Production"
+        Infrastructure__EventStoreConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;Trusted_Connection=True;"
+        Infrastructure__EventStoreAdministrationConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;Trusted_Connection=True;"
+        Configuration__ConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;Trusted_Connection=True;"
+        SqlServer__ConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;Trusted_Connection=True;"
+        SqlServer__MigrationsConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;Trusted_Connection=True;"
+      }
+
+      service {
+        name = "organisation-registry-api"
+
+        tags = [
+          "organisation-registry",
+          "api",
+          "traefik.enable=true",
+          "traefik.frontend.rule=Host:test.organisatie.basisregisters.vlaanderen;PathPrefixStrip:/api"
+        ]
+
+        port = "http"
+
+        check {
+          type     = "http"
+          name     = "GET / organisation-registry-api"
+          protocol = "http"
+          method   = "GET"
+          path     = "/"
+          interval = "10s"
+          timeout  = "2s"
+        }
+      }
+
+      resources {
+        cpu    = 200 # Mhz
+        memory = 400  # MB
+
+        network {
+          mbits = 1
+
+          port "http" {}
+        }
+      }
+    }
+  }
+}
