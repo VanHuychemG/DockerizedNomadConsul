@@ -29,3 +29,5 @@ docker run -p 8300:8300 -p 8301:8301 -p 8302:8302 -p 8500:8500 -p 8600:8600 -p 4
     * If the value of Listen All is no, the TCP/IP port number for this instance of SQL Server is the value of the TCP Dynamic Ports item for a specific IP address.
   * Make sure the TCP Port is 1433.
 * Restart SQL Server
+
+## Enable sa user and set password if needed

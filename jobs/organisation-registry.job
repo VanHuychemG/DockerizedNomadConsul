@@ -47,11 +47,11 @@ job "organisation-registry" {
 
       env {
         ASPNETCORE_ENVIRONMENT = "Production"
-        Infrastructure__EventStoreConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;Trusted_Connection=True;"
-        Infrastructure__EventStoreAdministrationConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;Trusted_Connection=True;"
-        Configuration__ConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;Trusted_Connection=True;"
-        SqlServer__ConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;Trusted_Connection=True;"
-        SqlServer__MigrationsConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;Trusted_Connection=True;"
+        Infrastructure__EventStoreConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;User ID=sa;Password=Password123!;"
+        Infrastructure__EventStoreAdministrationConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;User ID=sa;Password=Password123!;"
+        Configuration__ConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;User ID=sa;Password=Password123!;"
+        SqlServer__ConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;User ID=sa;Password=Password123!;"
+        SqlServer__MigrationsConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;User ID=sa;Password=Password123!;"
       }
 
       service {

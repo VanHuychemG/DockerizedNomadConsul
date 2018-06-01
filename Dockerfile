@@ -10,7 +10,7 @@ RUN set -eux && \
     apt-get -y autoclean &&  \
     apt-get install -y htop build-essential git unzip gnupg2 graphviz \
       ca-certificates curl gnupg openssl wget unzip supervisor net-tools vim \
-      sudo iputils-ping xinetd telnetd
+      sudo iputils-ping telnet
 
 # prepping
 RUN mkdir -p /var/log/supervisor
