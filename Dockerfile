@@ -2,6 +2,8 @@ FROM ubuntu:16.04
 
 LABEL MAINTAINER="Geert Van Huychem <geert@iframeworx.be>"
 
+SHELL ["/bin/bash", "-c"]
+
 # set up certificates, base tools
 RUN set -eux && \
     apt-get update &&  \
@@ -11,6 +13,23 @@ RUN set -eux && \
     apt-get install -y htop build-essential git unzip gnupg2 graphviz \
       ca-certificates curl gnupg openssl wget unzip supervisor net-tools vim \
       sudo iputils-ping telnet
+
+# powerline fonts
+RUN mkdir -p /tmp/powerline && \
+  cd /tmp/powerline && \
+  git clone https://github.com/powerline/fonts.git && \
+  cd fonts && \
+  ./install.sh && \
+  cd / && \
+  rm -rf /tmp/powerline
+
+# bash it
+RUN git clone --depth=1 https://github.com/Bash-it/bash-it.git ~/.bash_it && \
+  ~/.bash_it/install.sh && \
+  sed -i 's/\(^export BASH_IT_THEME.*$\)/#\ \1/' ~/.bashrc && \
+  sed -i "/^.*export BASH_IT_THEME/a\export BASH_IT_THEME='powerline'" ~/.bashrc && \
+  source ~/.bashrc && \
+  bash-it enable completion awscli docker docker-compose gh git packer terraform vagrant vault
 
 # prepping
 RUN mkdir -p /var/log/supervisor
