@@ -4,7 +4,7 @@ LABEL MAINTAINER="Geert Van Huychem <geert@iframeworx.be>"
 
 SHELL ["/bin/bash", "-c"]
 
-# set up certificates, base tools
+# CERTIFICATES, BASE TOOLING
 RUN set -eux && \
     apt-get update &&  \
     apt-get upgrade -y &&  \
@@ -14,7 +14,7 @@ RUN set -eux && \
       ca-certificates curl gnupg openssl wget unzip supervisor net-tools vim \
       sudo iputils-ping telnet
 
-# powerline fonts
+# POWERLINE THEME
 RUN mkdir -p /tmp/powerline && \
   cd /tmp/powerline && \
   git clone https://github.com/powerline/fonts.git && \
@@ -23,7 +23,7 @@ RUN mkdir -p /tmp/powerline && \
   cd / && \
   rm -rf /tmp/powerline
 
-# bash it
+# BASH IT
 RUN git clone --depth=1 https://github.com/Bash-it/bash-it.git ~/.bash_it && \
   ~/.bash_it/install.sh && \
   sed -i 's/\(^export BASH_IT_THEME.*$\)/#\ \1/' ~/.bashrc && \
@@ -31,25 +31,26 @@ RUN git clone --depth=1 https://github.com/Bash-it/bash-it.git ~/.bash_it && \
   source ~/.bashrc && \
   bash-it enable completion awscli docker docker-compose gh git packer terraform vagrant vault
 
-# prepping
+# PREPPING
 RUN mkdir -p /var/log/supervisor
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-COPY scripts/start-consul.sh scripts/start-nomad.sh ./
+COPY scripts/start-consul.sh scripts/start-nomad.sh scripts/start-elastic.sh ./
 
-RUN chmod +x start-consul.sh start-nomad.sh
+RUN chmod +x start-consul.sh start-nomad.sh start-elastic.sh
 
-# This is the location of the releases.
 ENV HASHICORP_RELEASES=https://releases.hashicorp.com
 
-# trusted key
-RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 91A6E7F85D05C65630BEF18951852D87348FFC4C
+ENV ELASTIC_RELEASES "https://artifacts.elastic.co/downloads/elasticsearch"
 
+# hashicorp - 91A6E7F85D05C65630BEF18951852D87348FFC4C
+# elastic - 46095ACC8548582C1A2699A9D27D666CD88E42B4
+RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 91A6E7F85D05C65630BEF18951852D87348FFC4C 46095ACC8548582C1A2699A9D27D666CD88E42B4
+
+# CONSUL
 RUN mkdir -p /tmp/build/consul
-RUN mkdir -p /tmp/build/nomad
 
-# consul
 RUN addgroup --system consul && \
   adduser --system --group consul
 
@@ -64,9 +65,9 @@ RUN cd /tmp/build/consul && \
       x86_64) arch='amd64' ;; \
       *) echo >&2 "error: unsupported architecture: ${arch} (see ${HASHICORP_RELEASES}/consul/${CONSUL_VERSION}/)" && exit 1 ;; \
   esac && \
-  wget ${HASHICORP_RELEASES}/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_${arch}.zip && \
-  wget ${HASHICORP_RELEASES}/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_SHA256SUMS && \
-  wget ${HASHICORP_RELEASES}/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_SHA256SUMS.sig && \
+  wget --progress=bar:force ${HASHICORP_RELEASES}/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_${arch}.zip && \
+  wget --progress=bar:force ${HASHICORP_RELEASES}/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_SHA256SUMS && \
+  wget --progress=bar:force ${HASHICORP_RELEASES}/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_SHA256SUMS.sig && \
   gpg --batch --verify consul_${CONSUL_VERSION}_SHA256SUMS.sig consul_${CONSUL_VERSION}_SHA256SUMS && \
   grep consul_${CONSUL_VERSION}_linux_${arch}.zip consul_${CONSUL_VERSION}_SHA256SUMS | sha256sum -c && \
   unzip -d /bin consul_${CONSUL_VERSION}_linux_${arch}.zip && \
@@ -79,7 +80,9 @@ RUN mkdir -p /consul/data && \
 
 EXPOSE 8300 8301 8301/udp 8302 8302/udp 8500 8600 8600/udp
 
-# nomad
+# NOMAD
+RUN mkdir -p /tmp/build/nomad
+
 RUN addgroup --system nomad && \
   adduser --system --group nomad
 
@@ -95,20 +98,14 @@ RUN cd /tmp/build/nomad && \
       *) echo >&2 "error: unsupported architecture: ${arch} (see ${HASHICORP_RELEASES}/nomad/${NOMAD_VERSION}/)" && exit 1 ;; \
   esac && \
   echo ${HASHICORP_RELEASES}/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_${arch}.zip && \
-  curl -L -o nomad_${NOMAD_VERSION}_linux_amd64.zip ${HASHICORP_RELEASES}/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_${arch}.zip && \
-  curl -L -o nomad_${NOMAD_VERSION}_SHA256SUMS      ${HASHICORP_RELEASES}/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_SHA256SUMS && \
-  curl -L -o nomad_${NOMAD_VERSION}_SHA256SUMS.sig  ${HASHICORP_RELEASES}/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_SHA256SUMS.sig && \
+  wget --progress=bar:force -O nomad_${NOMAD_VERSION}_linux_amd64.zip ${HASHICORP_RELEASES}/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_${arch}.zip && \
+  wget --progress=bar:force -O nomad_${NOMAD_VERSION}_SHA256SUMS      ${HASHICORP_RELEASES}/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_SHA256SUMS && \
+  wget --progress=bar:force -O nomad_${NOMAD_VERSION}_SHA256SUMS.sig  ${HASHICORP_RELEASES}/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_SHA256SUMS.sig && \
   gpg --batch --verify nomad_${NOMAD_VERSION}_SHA256SUMS.sig nomad_${NOMAD_VERSION}_SHA256SUMS && \
   grep nomad_${NOMAD_VERSION}_linux_amd64.zip nomad_${NOMAD_VERSION}_SHA256SUMS | sha256sum -c && \
   unzip -d /bin nomad_${NOMAD_VERSION}_linux_${arch}.zip && \
   # smoke test
   nomad version
-
-# docker
-
-# cleanup
-RUN cd /tmp/build && \
-  rm -rf /tmp/build
 
 RUN mkdir -p /nomad/data && \
   mkdir -p /etc/nomad && \
@@ -117,5 +114,68 @@ RUN mkdir -p /nomad/data && \
 COPY conf/nomad/local.json /etc/nomad/local.json
 
 EXPOSE 4646 4647 4648 4648/udp
+
+# JAVA
+RUN apt-get update && \
+	apt-get install -y openjdk-8-jdk && \
+	apt-get install -y ant && \
+	apt-get clean && \
+	rm -rf /var/lib/apt/lists/* && \
+	rm -rf /var/cache/oracle-jdk8-installer;
+
+RUN apt-get update && \
+	apt-get install -y ca-certificates-java && \
+	apt-get clean && \
+	update-ca-certificates -f && \
+	rm -rf /var/lib/apt/lists/* && \
+	rm -rf /var/cache/oracle-jdk8-installer;
+
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+
+RUN export JAVA_HOME
+
+# ELASTICSEARCH
+RUN mkdir -p /tmp/build/elastic
+
+RUN addgroup --system elastic && \
+  adduser --system --group elastic
+
+ENV ELASTIC_VERSION 6.2.4
+
+#https://github.com/blacktop/docker-elasticsearch-alpine/blob/master/6.2/Dockerfile
+RUN cd /tmp/build/elastic && \
+  echo ${ELASTIC_RELEASES}/elasticsearch-${ELASTIC_VERSION}.zip && \
+  wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.zip          ${ELASTIC_RELEASES}/elasticsearch-${ELASTIC_VERSION}.zip && \
+  wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.zip.asc      ${ELASTIC_RELEASES}/elasticsearch-${ELASTIC_VERSION}.zip.asc && \
+  wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.zip.sha512   ${ELASTIC_RELEASES}/elasticsearch-${ELASTIC_VERSION}.zip.sha512 && \
+  gpg --batch --verify elasticsearch-${ELASTIC_VERSION}.zip.asc elasticsearch-${ELASTIC_VERSION}.zip && \
+  grep elasticsearch-${ELASTIC_VERSION}.zip elasticsearch-${ELASTIC_VERSION}.zip.sha512 | shasum -a 512 -c && \
+  unzip elasticsearch-${ELASTIC_VERSION}.zip && \
+  usermod -m -d /usr/share/elasticsearch elastic && \
+  mv elasticsearch-${ELASTIC_VERSION}/* /usr/share/elasticsearch
+
+RUN for path in \
+  /usr/share/elasticsearch/data \
+  /usr/share/elasticsearch/logs \
+  /usr/share/elasticsearch/config \
+  /usr/share/elasticsearch/config/scripts \
+  /usr/share/elasticsearch/tmp \
+  /usr/share/elasticsearch/plugins \
+  ; do \
+  mkdir -p "$path"; \
+  chown -R elastic:elastic "$path"; \
+  done
+
+COPY conf/elasticsearch/logrotate /etc/logrotate.d/elasticsearch
+
+ENV PATH /usr/share/elasticsearch/bin:$PATH
+
+VOLUME ["/usr/share/elasticsearch/data"]
+
+EXPOSE 9200 9300
+
+# CLEANUP
+RUN cd /tmp/build && \
+  rm -rf /tmp/build
 
 CMD ["/usr/bin/supervisord"]
