@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Start Elastic.
 echo 'Starting Elastic...'
 
-exec elasticsearch
+exec su - elastic -c "./bin/elasticsearch"

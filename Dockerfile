@@ -51,8 +51,11 @@ RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 91A6E7F85D05C65630BEF189518
 # CONSUL
 RUN mkdir -p /tmp/build/consul
 
+#RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
+
 RUN addgroup --system consul && \
-  adduser --system --group consul
+  adduser --system --group consul && \
+  adduser consul sudo
 
 ENV CONSUL_VERSION=1.1.0
 
@@ -84,7 +87,8 @@ EXPOSE 8300 8301 8301/udp 8302 8302/udp 8500 8600 8600/udp
 RUN mkdir -p /tmp/build/nomad
 
 RUN addgroup --system nomad && \
-  adduser --system --group nomad
+  adduser --system --group nomad && \
+  adduser nomad sudo
 
 ENV NOMAD_VERSION 0.8.3
 
@@ -138,11 +142,15 @@ RUN export JAVA_HOME
 RUN mkdir -p /tmp/build/elastic
 
 RUN addgroup --system elastic && \
-  adduser --system --group elastic
+  adduser --system \
+    --group \
+    --home /usr/share/elasticsearch \
+    --shell /bin/bash elastic
+
+RUN usermod -aG sudo elastic
 
 ENV ELASTIC_VERSION 6.2.4
 
-#https://github.com/blacktop/docker-elasticsearch-alpine/blob/master/6.2/Dockerfile
 RUN cd /tmp/build/elastic && \
   echo ${ELASTIC_RELEASES}/elasticsearch-${ELASTIC_VERSION}.zip && \
   wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.zip          ${ELASTIC_RELEASES}/elasticsearch-${ELASTIC_VERSION}.zip && \
@@ -151,7 +159,6 @@ RUN cd /tmp/build/elastic && \
   gpg --batch --verify elasticsearch-${ELASTIC_VERSION}.zip.asc elasticsearch-${ELASTIC_VERSION}.zip && \
   grep elasticsearch-${ELASTIC_VERSION}.zip elasticsearch-${ELASTIC_VERSION}.zip.sha512 | shasum -a 512 -c && \
   unzip elasticsearch-${ELASTIC_VERSION}.zip && \
-  usermod -m -d /usr/share/elasticsearch elastic && \
   mv elasticsearch-${ELASTIC_VERSION}/* /usr/share/elasticsearch
 
 RUN for path in \
@@ -166,6 +173,8 @@ RUN for path in \
   chown -R elastic:elastic "$path"; \
   done
 
+COPY conf/elasticsearch/elasticsearch.yml /usr/share/elasticsearch/config
+COPY conf/elasticsearch/log4j2.properties /usr/share/elasticsearch/config
 COPY conf/elasticsearch/logrotate /etc/logrotate.d/elasticsearch
 
 ENV PATH /usr/share/elasticsearch/bin:$PATH
