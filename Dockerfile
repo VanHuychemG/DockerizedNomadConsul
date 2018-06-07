@@ -4,7 +4,7 @@ LABEL MAINTAINER="Geert Van Huychem <geert@iframeworx.be>"
 
 SHELL ["/bin/bash", "-c"]
 
-# CERTIFICATES, BASE TOOLING
+############################################## <BASE TOOLING
 RUN set -eux && \
     apt-get update &&  \
     apt-get upgrade -y &&  \
@@ -12,9 +12,11 @@ RUN set -eux && \
     apt-get -y autoclean &&  \
     apt-get install -y htop build-essential git unzip gnupg2 graphviz \
       ca-certificates curl gnupg openssl wget unzip supervisor net-tools vim \
-      sudo iputils-ping telnet
+      sudo iputils-ping telnet git tar nodejs
+############################################## </BASE TOOLING
 
-# POWERLINE THEME
+
+############################################## <POWERLINE THEME
 RUN mkdir -p /tmp/powerline && \
   cd /tmp/powerline && \
   git clone https://github.com/powerline/fonts.git && \
@@ -22,36 +24,36 @@ RUN mkdir -p /tmp/powerline && \
   ./install.sh && \
   cd / && \
   rm -rf /tmp/powerline
+############################################## </POWERLINE THEME
 
-# BASH IT
+
+############################################## <BASH IT
 RUN git clone --depth=1 https://github.com/Bash-it/bash-it.git ~/.bash_it && \
   ~/.bash_it/install.sh && \
   sed -i 's/\(^export BASH_IT_THEME.*$\)/#\ \1/' ~/.bashrc && \
   sed -i "/^.*export BASH_IT_THEME/a\export BASH_IT_THEME='powerline'" ~/.bashrc && \
   source ~/.bashrc && \
   bash-it enable completion awscli docker docker-compose gh git packer terraform vagrant vault
+############################################## </BASH IT
 
-# PREPPING
+
+############################################## <SUPERVISOR
 RUN mkdir -p /var/log/supervisor
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-COPY scripts/start-consul.sh scripts/start-nomad.sh scripts/start-elastic.sh ./
+COPY scripts/start-consul.sh scripts/start-nomad.sh scripts/start-elastic.sh scripts/start-kibana.sh ./
 
-RUN chmod +x start-consul.sh start-nomad.sh start-elastic.sh
+RUN chmod +x start-consul.sh start-nomad.sh start-elastic.sh start-kibana.sh
+############################################## </SUPERVISOR
 
-ENV HASHICORP_RELEASES=https://releases.hashicorp.com
 
-ENV ELASTIC_RELEASES "https://artifacts.elastic.co/downloads/elasticsearch"
+############################################## <CONSUL
+ENV HASHICORP_RELEASES "https://releases.hashicorp.com"
 
-# hashicorp - 91A6E7F85D05C65630BEF18951852D87348FFC4C
-# elastic - 46095ACC8548582C1A2699A9D27D666CD88E42B4
-RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 91A6E7F85D05C65630BEF18951852D87348FFC4C 46095ACC8548582C1A2699A9D27D666CD88E42B4
+RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 91A6E7F85D05C65630BEF18951852D87348FFC4C
 
-# CONSUL
 RUN mkdir -p /tmp/build/consul
-
-#RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
 
 RUN addgroup --system consul && \
   adduser --system --group consul && \
@@ -82,8 +84,10 @@ RUN mkdir -p /consul/data && \
   chown -R consul:consul /consul
 
 EXPOSE 8300 8301 8301/udp 8302 8302/udp 8500 8600 8600/udp
+############################################## </CONSUL
 
-# NOMAD
+
+############################################## <NOMAD
 RUN mkdir -p /tmp/build/nomad
 
 RUN addgroup --system nomad && \
@@ -118,8 +122,10 @@ RUN mkdir -p /nomad/data && \
 COPY conf/nomad/local.json /etc/nomad/local.json
 
 EXPOSE 4646 4647 4648 4648/udp
+############################################## </NOMAD
 
-# JAVA
+
+############################################## <JAVA
 RUN apt-get update && \
 	apt-get install -y openjdk-8-jdk && \
 	apt-get install -y ant && \
@@ -137,51 +143,63 @@ RUN apt-get update && \
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 
 RUN export JAVA_HOME
+############################################## </JAVA
 
-# ELASTICSEARCH
-RUN mkdir -p /tmp/build/elastic
 
-RUN addgroup --system elastic && \
-  adduser --system \
-    --group \
-    --home /usr/share/elasticsearch \
-    --shell /bin/bash elastic
+############################################## <ELASTICSEARCH
+ENV ELASTICSEARCH_RELEASES "https://artifacts.elastic.co/downloads/elasticsearch/"
 
-RUN usermod -aG sudo elastic
+RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 46095ACC8548582C1A2699A9D27D666CD88E42B4
 
 ENV ELASTIC_VERSION 6.2.4
 
-RUN cd /tmp/build/elastic && \
-  echo ${ELASTIC_RELEASES}/elasticsearch-${ELASTIC_VERSION}.zip && \
-  wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.zip          ${ELASTIC_RELEASES}/elasticsearch-${ELASTIC_VERSION}.zip && \
-  wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.zip.asc      ${ELASTIC_RELEASES}/elasticsearch-${ELASTIC_VERSION}.zip.asc && \
-  wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.zip.sha512   ${ELASTIC_RELEASES}/elasticsearch-${ELASTIC_VERSION}.zip.sha512 && \
-  gpg --batch --verify elasticsearch-${ELASTIC_VERSION}.zip.asc elasticsearch-${ELASTIC_VERSION}.zip && \
-  grep elasticsearch-${ELASTIC_VERSION}.zip elasticsearch-${ELASTIC_VERSION}.zip.sha512 | shasum -a 512 -c && \
-  unzip elasticsearch-${ELASTIC_VERSION}.zip && \
-  mv elasticsearch-${ELASTIC_VERSION}/* /usr/share/elasticsearch
+RUN mkdir -p /var/lib/elasticsearch /tmp/build/elastic && \
+  adduser --system --home /opt/elasticsearch elastic && \
+  cd /tmp/build/elastic && \
+  wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.tar.gz          ${ELASTICSEARCH_RELEASES}elasticsearch-${ELASTIC_VERSION}.tar.gz && \
+  wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.tar.gz.asc      ${ELASTICSEARCH_RELEASES}elasticsearch-${ELASTIC_VERSION}.tar.gz.asc && \
+  gpg --batch --verify elasticsearch-${ELASTIC_VERSION}.tar.gz.asc elasticsearch-${ELASTIC_VERSION}.tar.gz && \
+  tar -zxf elasticsearch-${ELASTIC_VERSION}.tar.gz --strip-components=1 -C /opt/elasticsearch
 
-RUN for path in \
-  /usr/share/elasticsearch/data \
-  /usr/share/elasticsearch/logs \
-  /usr/share/elasticsearch/config \
-  /usr/share/elasticsearch/config/scripts \
-  /usr/share/elasticsearch/tmp \
-  /usr/share/elasticsearch/plugins \
-  ; do \
-  mkdir -p "$path"; \
-  chown -R elastic:elastic "$path"; \
-  done
+COPY conf/elasticsearch/root/ /
 
-COPY conf/elasticsearch/elasticsearch.yml /usr/share/elasticsearch/config
-COPY conf/elasticsearch/log4j2.properties /usr/share/elasticsearch/config
-COPY conf/elasticsearch/logrotate /etc/logrotate.d/elasticsearch
+RUN chmod a+x /service/elasticsearch/run.sh
 
-ENV PATH /usr/share/elasticsearch/bin:$PATH
+EXPOSE 9200/tcp 9300/tcp
+############################################## </ELASTICSEARCH
 
-VOLUME ["/usr/share/elasticsearch/data"]
 
-EXPOSE 9200 9300
+############################################## <KIBANA
+ENV KIBANA_RELEASES "https://artifacts.elastic.co/downloads/kibana/"
+
+ENV KIBANA_VERSION 6.2.4
+
+RUN mkdir -p /tmp/build/kibana && \
+  adduser --system --home /opt/kibana kibana && \
+  cd /tmp/build/kibana && \
+  arch="$(uname -m)" && \
+  case "${arch}" in \
+      aarch64) arch='arm64' ;; \
+      armhf) arch='arm' ;; \
+      x86) arch='386' ;; \
+      x86_64) arch='x86_64' ;; \
+      *) echo >&2 "error: unsupported architecture: ${arch} (see ${KIBANA_RELEASES}/kibana/${KIBANA_VERSION}/)" && exit 1 ;; \
+  esac && \
+  wget --progress=bar:force -O kibana-${KIBANA_VERSION}.tar.gz          ${KIBANA_RELEASES}kibana-${KIBANA_VERSION}-linux-${arch}.tar.gz && \
+  wget --progress=bar:force -O kibana-${KIBANA_VERSION}.tar.gz.asc      ${KIBANA_RELEASES}kibana-${KIBANA_VERSION}-linux-${arch}.tar.gz.asc && \
+  gpg --batch --verify kibana-${KIBANA_VERSION}.tar.gz.asc kibana-${KIBANA_VERSION}.tar.gz && \
+  tar -zxf kibana-${KIBANA_VERSION}.tar.gz --strip-components=1 -C /opt/kibana
+
+COPY conf/kibana/root/ /
+
+RUN chmod a+x /service/kibana/run.sh
+
+EXPOSE 5601/tcp
+############################################## </KIBANA
+
+VOLUME /var/lib/elasticsearch
+RUN chown -R elastic /var/lib/elasticsearch /opt/elasticsearch
+RUN chown -R kibana /opt/kibana
 
 # CLEANUP
 RUN cd /tmp/build && \

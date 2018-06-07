@@ -3,4 +3,4 @@
 # Start Elastic.
 echo 'Starting Elastic...'
 
-exec su - elastic -c "./bin/elasticsearch"
+exec su - elastic /opt/elasticsearch/bin/elasticsearch 2>&1
