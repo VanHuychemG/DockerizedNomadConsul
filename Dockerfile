@@ -163,8 +163,6 @@ RUN mkdir -p /var/lib/elasticsearch /tmp/build/elastic && \
 
 COPY conf/elasticsearch/root/ /
 
-RUN chmod a+x /service/elasticsearch/run.sh
-
 EXPOSE 9200/tcp 9300/tcp
 ############################################## </ELASTICSEARCH
 
@@ -191,8 +189,6 @@ RUN mkdir -p /tmp/build/kibana && \
   tar -zxf kibana-${KIBANA_VERSION}.tar.gz --strip-components=1 -C /opt/kibana
 
 COPY conf/kibana/root/ /
-
-RUN chmod a+x /service/kibana/run.sh
 
 EXPOSE 5601/tcp
 ############################################## </KIBANA
