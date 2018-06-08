@@ -4,7 +4,10 @@
     "bootstrap_expect": 3
   },
   "client": {
-    "enabled": true
+    "enabled": true,
+    "options": {
+      "docker.privileged.enabled": true
+    }
   },
   "datacenter": "dc1",
   "data_dir": "/nomad/data/",
