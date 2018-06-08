@@ -153,8 +153,12 @@ RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 46095ACC8548582C1A2699A9D27
 
 ENV ELASTIC_VERSION 6.2.4
 
+RUN addgroup --system elastic && \
+  adduser --system --home /opt/elasticsearch --group elastic && \
+  adduser elastic sudo && \
+  usermod --shell /bin/bash elastic
+
 RUN mkdir -p /var/lib/elasticsearch /tmp/build/elastic && \
-  adduser --system --home /opt/elasticsearch elastic && \
   cd /tmp/build/elastic && \
   wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.tar.gz          ${ELASTICSEARCH_RELEASES}elasticsearch-${ELASTIC_VERSION}.tar.gz && \
   wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.tar.gz.asc      ${ELASTICSEARCH_RELEASES}elasticsearch-${ELASTIC_VERSION}.tar.gz.asc && \
@@ -172,8 +176,12 @@ ENV KIBANA_RELEASES "https://artifacts.elastic.co/downloads/kibana/"
 
 ENV KIBANA_VERSION 6.2.4
 
+RUN addgroup --system kibana && \
+  adduser --system --home /opt/kibana --group kibana && \
+  adduser kibana sudo && \
+  usermod --shell /bin/bash kibana
+
 RUN mkdir -p /tmp/build/kibana && \
-  adduser --system --home /opt/kibana kibana && \
   cd /tmp/build/kibana && \
   arch="$(uname -m)" && \
   case "${arch}" in \
@@ -193,12 +201,10 @@ COPY conf/kibana/root/ /
 EXPOSE 5601/tcp
 ############################################## </KIBANA
 
-VOLUME /var/lib/elasticsearch
-RUN chown -R elastic /var/lib/elasticsearch /opt/elasticsearch
-RUN chown -R kibana /opt/kibana
-
 # CLEANUP
 RUN cd /tmp/build && \
   rm -rf /tmp/build
+
+VOLUME /var/lib/elasticsearch
 
 CMD ["/usr/bin/supervisord"]

@@ -3,4 +3,6 @@
 # Start Elastic.
 echo 'Starting Elastic...'
 
-exec su - elastic /opt/elasticsearch/bin/elasticsearch 2>&1
+chown -R elastic:elastic /var/lib/elasticsearch /opt/elasticsearch
+
+exec su - elastic /opt/elasticsearch/bin/elasticsearch

@@ -3,4 +3,6 @@
 # Start Kibana.
 echo 'Starting Kibana...'
 
-exec su - kibana node --no-warnings /opt/kibana/src/cli 2>&1
+chown -R kibana:kibana /opt/kibana
+
+exec su - kibana /opt/kibana/bin/kibana
