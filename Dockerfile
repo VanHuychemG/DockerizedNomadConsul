@@ -41,10 +41,6 @@ RUN git clone --depth=1 https://github.com/Bash-it/bash-it.git ~/.bash_it && \
 RUN mkdir -p /var/log/supervisor
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-COPY scripts/start-consul.sh scripts/start-nomad.sh scripts/start-elastic.sh scripts/start-kibana.sh ./
-
-RUN chmod +x start-consul.sh start-nomad.sh start-elastic.sh start-kibana.sh
 ############################################## </SUPERVISOR
 
 
@@ -52,6 +48,10 @@ RUN chmod +x start-consul.sh start-nomad.sh start-elastic.sh start-kibana.sh
 ENV HASHICORP_RELEASES "https://releases.hashicorp.com"
 
 RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 91A6E7F85D05C65630BEF18951852D87348FFC4C
+
+COPY scripts/start-consul.sh ./
+
+RUN chmod +x start-consul.sh
 
 RUN mkdir -p /tmp/build/consul
 
@@ -88,6 +88,10 @@ EXPOSE 8300 8301 8301/udp 8302 8302/udp 8500 8600 8600/udp
 
 
 ############################################## <NOMAD
+COPY scripts/start-nomad.sh ./
+
+RUN chmod +x start-nomad.sh
+
 RUN mkdir -p /tmp/build/nomad
 
 RUN addgroup --system nomad && \
@@ -153,6 +157,10 @@ RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 46095ACC8548582C1A2699A9D27
 
 ENV ELASTIC_VERSION 6.2.4
 
+COPY scripts/start-elastic.sh ./
+
+RUN chmod +x start-elastic.sh
+
 RUN addgroup --system elastic && \
   adduser --system --home /opt/elasticsearch --group elastic && \
   adduser elastic sudo && \
@@ -172,33 +180,37 @@ EXPOSE 9200/tcp 9300/tcp
 
 
 ############################################## <KIBANA
-ENV KIBANA_RELEASES "https://artifacts.elastic.co/downloads/kibana/"
+# ENV KIBANA_RELEASES "https://artifacts.elastic.co/downloads/kibana/"
 
-ENV KIBANA_VERSION 6.2.4
+# ENV KIBANA_VERSION 6.2.4
 
-RUN addgroup --system kibana && \
-  adduser --system --home /opt/kibana --group kibana && \
-  adduser kibana sudo && \
-  usermod --shell /bin/bash kibana
+# COPY scripts/start-kibana.sh ./
 
-RUN mkdir -p /tmp/build/kibana && \
-  cd /tmp/build/kibana && \
-  arch="$(uname -m)" && \
-  case "${arch}" in \
-      aarch64) arch='arm64' ;; \
-      armhf) arch='arm' ;; \
-      x86) arch='386' ;; \
-      x86_64) arch='x86_64' ;; \
-      *) echo >&2 "error: unsupported architecture: ${arch} (see ${KIBANA_RELEASES}/kibana/${KIBANA_VERSION}/)" && exit 1 ;; \
-  esac && \
-  wget --progress=bar:force -O kibana-${KIBANA_VERSION}.tar.gz          ${KIBANA_RELEASES}kibana-${KIBANA_VERSION}-linux-${arch}.tar.gz && \
-  wget --progress=bar:force -O kibana-${KIBANA_VERSION}.tar.gz.asc      ${KIBANA_RELEASES}kibana-${KIBANA_VERSION}-linux-${arch}.tar.gz.asc && \
-  gpg --batch --verify kibana-${KIBANA_VERSION}.tar.gz.asc kibana-${KIBANA_VERSION}.tar.gz && \
-  tar -zxf kibana-${KIBANA_VERSION}.tar.gz --strip-components=1 -C /opt/kibana
+# RUN chmod +x start-kibana.sh
 
-COPY conf/kibana/root/ /
+# RUN addgroup --system kibana && \
+#   adduser --system --home /opt/kibana --group kibana && \
+#   adduser kibana sudo && \
+#   usermod --shell /bin/bash kibana
 
-EXPOSE 5601/tcp
+# RUN mkdir -p /tmp/build/kibana && \
+#   cd /tmp/build/kibana && \
+#   arch="$(uname -m)" && \
+#   case "${arch}" in \
+#       aarch64) arch='arm64' ;; \
+#       armhf) arch='arm' ;; \
+#       x86) arch='386' ;; \
+#       x86_64) arch='x86_64' ;; \
+#       *) echo >&2 "error: unsupported architecture: ${arch} (see ${KIBANA_RELEASES}/kibana/${KIBANA_VERSION}/)" && exit 1 ;; \
+#   esac && \
+#   wget --progress=bar:force -O kibana-${KIBANA_VERSION}.tar.gz          ${KIBANA_RELEASES}kibana-${KIBANA_VERSION}-linux-${arch}.tar.gz && \
+#   wget --progress=bar:force -O kibana-${KIBANA_VERSION}.tar.gz.asc      ${KIBANA_RELEASES}kibana-${KIBANA_VERSION}-linux-${arch}.tar.gz.asc && \
+#   gpg --batch --verify kibana-${KIBANA_VERSION}.tar.gz.asc kibana-${KIBANA_VERSION}.tar.gz && \
+#   tar -zxf kibana-${KIBANA_VERSION}.tar.gz --strip-components=1 -C /opt/kibana
+
+# COPY conf/kibana/root/ /
+
+# EXPOSE 5601/tcp
 ############################################## </KIBANA
 
 # CLEANUP

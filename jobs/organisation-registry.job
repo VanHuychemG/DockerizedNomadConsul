@@ -53,7 +53,7 @@ job "organisation-registry" {
         SqlServer__ConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;User ID=sa;Password=Password123!;"
         SqlServer__MigrationsConnectionString = "Server=tcp:10.19.218.201,1433;Initial Catalog=wegwijscopy;User ID=sa;Password=Password123!;"
         Auth__JwtSharedSigningKey = "mysupersecret_secretkey!123"
-        ElasticSearch__ConnectionString = "http://172.17.0.2:9200/"
+        ElasticSearch__ConnectionString = "http://172.17.0.3:9200/"
         ElasticSearch__User = ""
         ElasticSearch__Pass = ""
       }
