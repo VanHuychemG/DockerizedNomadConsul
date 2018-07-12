@@ -1,5 +1,7 @@
 ## Start the container
 
+### Linux
+
 ```bash
 docker run \
   -p 8300:8300 \
@@ -18,6 +20,12 @@ docker run \
   --name=devmasjien \
   --privileged \
   dev-container
+```
+
+### Windows
+
+```
+docker run -p 8300:8300 -p 8301:8301 -p 8302:8302 -p 8500:8500 -p 8600:8600 -p 4646:4646 -p 4647:4647 -p 4648:4648 -p 9200:9200 -p 5601:5601 -p 5000:5000 -v "/var/run/docker.sock:/var/run/docker.sock" -v "/tmp:/tmp" --name=devmasjien --privileged dev-container
 ```
 
 ## Enable TCP/IP connectionstrings on SQLServer/SQLExpress
