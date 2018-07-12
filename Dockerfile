@@ -151,31 +151,31 @@ RUN export JAVA_HOME
 
 
 ############################################## <ELASTICSEARCH
-ENV ELASTICSEARCH_RELEASES "https://artifacts.elastic.co/downloads/elasticsearch/"
+# ENV ELASTICSEARCH_RELEASES "https://artifacts.elastic.co/downloads/elasticsearch/"
 
-RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 46095ACC8548582C1A2699A9D27D666CD88E42B4
+# RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 46095ACC8548582C1A2699A9D27D666CD88E42B4
 
-ENV ELASTIC_VERSION 6.2.4
+# ENV ELASTIC_VERSION 6.2.4
 
-COPY scripts/start-elastic.sh ./
+# COPY scripts/start-elastic.sh ./
 
-RUN chmod +x start-elastic.sh
+# RUN chmod +x start-elastic.sh
 
-RUN addgroup --system elastic && \
-  adduser --system --home /opt/elasticsearch --group elastic && \
-  adduser elastic sudo && \
-  usermod --shell /bin/bash elastic
+# RUN addgroup --system elastic && \
+#   adduser --system --home /opt/elasticsearch --group elastic && \
+#   adduser elastic sudo && \
+#   usermod --shell /bin/bash elastic
 
-RUN mkdir -p /var/lib/elasticsearch /tmp/build/elastic && \
-  cd /tmp/build/elastic && \
-  wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.tar.gz          ${ELASTICSEARCH_RELEASES}elasticsearch-${ELASTIC_VERSION}.tar.gz && \
-  wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.tar.gz.asc      ${ELASTICSEARCH_RELEASES}elasticsearch-${ELASTIC_VERSION}.tar.gz.asc && \
-  gpg --batch --verify elasticsearch-${ELASTIC_VERSION}.tar.gz.asc elasticsearch-${ELASTIC_VERSION}.tar.gz && \
-  tar -zxf elasticsearch-${ELASTIC_VERSION}.tar.gz --strip-components=1 -C /opt/elasticsearch
+# RUN mkdir -p /var/lib/elasticsearch /tmp/build/elastic && \
+#   cd /tmp/build/elastic && \
+#   wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.tar.gz          ${ELASTICSEARCH_RELEASES}elasticsearch-${ELASTIC_VERSION}.tar.gz && \
+#   wget --progress=bar:force -O elasticsearch-${ELASTIC_VERSION}.tar.gz.asc      ${ELASTICSEARCH_RELEASES}elasticsearch-${ELASTIC_VERSION}.tar.gz.asc && \
+#   gpg --batch --verify elasticsearch-${ELASTIC_VERSION}.tar.gz.asc elasticsearch-${ELASTIC_VERSION}.tar.gz && \
+#   tar -zxf elasticsearch-${ELASTIC_VERSION}.tar.gz --strip-components=1 -C /opt/elasticsearch
 
-COPY conf/elasticsearch/root/ /
+# COPY conf/elasticsearch/root/ /
 
-EXPOSE 9200/tcp 9300/tcp
+# EXPOSE 9200/tcp 9300/tcp
 ############################################## </ELASTICSEARCH
 
 
