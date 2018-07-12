@@ -12,8 +12,14 @@ RUN set -eux && \
     apt-get -y autoclean &&  \
     apt-get install -y htop build-essential git unzip gnupg2 graphviz \
       ca-certificates curl gnupg openssl wget unzip supervisor net-tools vim \
-      sudo iputils-ping telnet git tar nodejs
+      sudo iputils-ping telnet git tar nodejs python-pip
 ############################################## </BASE TOOLING
+
+
+############################################## <AWS
+RUN pip install --upgrade pip
+RUN pip install --upgrade --user awscli
+############################################## </AWS
 
 
 ############################################## <POWERLINE THEME
@@ -27,12 +33,14 @@ RUN mkdir -p /tmp/powerline && \
 ############################################## </POWERLINE THEME
 
 
-############################################## <BASH IT
+############################################## <BASH IT + AWS CHECK
 RUN git clone --depth=1 https://github.com/Bash-it/bash-it.git ~/.bash_it && \
   ~/.bash_it/install.sh && \
   sed -i 's/\(^export BASH_IT_THEME.*$\)/#\ \1/' ~/.bashrc && \
   sed -i "/^.*export BASH_IT_THEME/a\export BASH_IT_THEME='powerline'" ~/.bashrc && \
+  echo 'export PATH=~/.local/bin:$PATH' >> ~/.bashrc && \
   source ~/.bashrc && \
+  aws --version && \
   bash-it enable completion awscli docker docker-compose gh git packer terraform vagrant vault
 ############################################## </BASH IT
 
@@ -51,11 +59,9 @@ RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 91A6E7F85D05C65630BEF189518
 
 COPY scripts/start-consul.sh ./
 
-RUN chmod +x start-consul.sh
-
-RUN mkdir -p /tmp/build/consul
-
-RUN addgroup --system consul && \
+RUN chmod +x start-consul.sh && \
+  mkdir -p /tmp/build/consul && \
+  addgroup --system consul && \
   adduser --system --group consul && \
   adduser consul sudo
 
@@ -90,11 +96,9 @@ EXPOSE 8300 8301 8301/udp 8302 8302/udp 8500 8600 8600/udp
 ############################################## <NOMAD
 COPY scripts/start-nomad.sh ./
 
-RUN chmod +x start-nomad.sh
-
-RUN mkdir -p /tmp/build/nomad
-
-RUN addgroup --system nomad && \
+RUN chmod +x start-nomad.sh && \
+  mkdir -p /tmp/build/nomad && \
+  addgroup --system nomad && \
   adduser --system --group nomad && \
   adduser nomad sudo
 

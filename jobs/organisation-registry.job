@@ -1,6 +1,4 @@
 job "organisation-registry" {
-  // region      = "eu-west-1"
-  // datacenters = ["aws-eu-west-1"]
   datacenters = ["dc1"]
 
   priority = 70
@@ -16,12 +14,6 @@ job "organisation-registry" {
 
   group "organisation-registry-api" {
     count = 1
-
-  //  constraint {
-  //    operator = "distinct_property"
-  //    attribute = "${attr.platform.aws.placement.availability-zone}"
-  //    value = "1"
-  //  }
 
     meta {
       registry-component = "api"
@@ -40,7 +32,7 @@ job "organisation-registry" {
 
         network_mode       = "host"
         hostname           = "organisation-registry-api"
-        dns_servers        = ["172.21.0.2"]
+        dns_servers        = ["127.0.0.1"]
         port_map {
           http  = 5000
         }
@@ -64,9 +56,7 @@ job "organisation-registry" {
 
         tags = [
           "organisation-registry",
-          "api",
-          "traefik.enable=true",
-          "traefik.frontend.rule=Host:test.organisatie.basisregisters.vlaanderen;PathPrefixStrip:/api"
+          "api"
         ]
 
         port = "http"
